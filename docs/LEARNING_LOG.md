@@ -17,3 +17,28 @@
 
 ### Next
 - cipher module: passphrase -> key (KDF), then AES-GCM encrypt/decrypt
+
+
+
+
+## Day 2: Key derivation (KDF)
+
+- Built: `cryptique/kdf.py` with `generate_salt()` and `derive_key()` using scrypt
+- Why: a passphrase is a weak secret, so it can't be used as an encryption key directly. A KDF turns it into a 256-bit key and makes every guess expensive for an attacker.
+
+### Concepts learned
+- **KDF:** I pay the cost once (about 0.22 s). An attacker pays it for every guess.
+- **Salt:** random, stored openly next to the encrypted data. It makes keys unique per file, so cracking work and precomputed tables can't be reused. It is not secret, and it doesn't fix a weak or reused passphrase.
+- **scrypt is memory-hard** (about 32 MB per guess), which blunts GPU attacks.
+- **Experiment results:** same salt + same passphrase gives the same key. A different salt gives a different key. That's why the salt must be stored with the file.
+- **Speed gap:** SHA-256 did about 1,206,695 guesses/sec versus scrypt at about 4.5/sec, roughly 268,000x slower for the attacker.
+
+### Confusing / went wrong
+- I thought the salt had to be secret. Wrong: the attacker can see it. The secret is the passphrase.
+- I first thought we could "change the encryption" while an attacker was guessing. Wrong: theft is offline, so protection has to be built into the file in advance.
+- Unsure where to put `__init__.py`: the repo folder holds project files, and the code goes in a `cryptique/` package folder inside it.
+- SSH warning "REMOTE HOST IDENTIFICATION HAS CHANGED": the host key for that IP differed from the saved one. Verify the fingerprint on the real machine before removing the old entry with `ssh-keygen -R`.
+- Learned that an SSH private key without a passphrase is usable by anyone who copies it. Can add one with `ssh-keygen -p`.
+
+### Next
+- AES-GCM encryption in the cipher module. Open question: why do we need both a salt and a nonce?
