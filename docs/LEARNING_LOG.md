@@ -42,3 +42,27 @@
 
 ### Next
 - AES-GCM encryption in the cipher module. Open question: why do we need both a salt and a nonce?
+
+
+
+
+
+## Day 3: AES-GCM encryption (cipher module)
+
+- Built: `cryptique/cipher.py` with `encrypt()`, `decrypt()`, `encrypt_file()` and `decrypt_file()`
+- File format: `[salt 16 bytes][nonce 12 bytes][ciphertext + 16-byte tag]`, so every encrypted file adds 44 bytes of overhead
+
+### Concepts learned
+- **Salt vs nonce:** the salt feeds the KDF (before the key exists) and makes the key unique per file. The nonce feeds AES-GCM (after the key exists) and makes each encryption unique. Neither is secret. Reusing a nonce with the same key breaks GCM.
+- **Authenticated encryption:** the tag is computed from the key, nonce and ciphertext. Any change to the data makes verification fail, and GCM returns nothing instead of garbage. This is why GCM beats plain AES-CBC.
+- **Experiments:** round trip works. Wrong passphrase is rejected. A flipped bit in the salt, nonce, ciphertext or tag is rejected every time.
+- Wrong passphrase and tampered data give the same error. GCM can't tell them apart, and the tool shouldn't pretend it can.
+- Reading and writing files as raw bytes, because encrypted data isn't text.
+- Use `getpass` for passphrases so they don't show on screen or land in shell history. Keep test secrets in /tmp, outside the repo.
+
+### Confusing / went wrong
+- I tried to explain tamper detection by saying the length or salt changed, but the length never changed. The real reason is that the tag is recomputed and no longer matches.
+- Wasn't sure what "CLI" meant at first: it's a thin layer over the same functions, so the tool can be run from the terminal.
+
+### Next
+- Build the CLI: argparse subcommands, hidden passphrase prompt, friendly errors, pyproject.toml so `cryptique` works as a command

@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 from cryptography.exceptions import InvalidTag
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
@@ -31,3 +32,14 @@ def decrypt(blob: bytes, passphrase: str) -> bytes:
         return AESGCM(key).decrypt(nonce, ciphertext, None)
     except InvalidTag:
         raise ValueError("Decryption failed: wrong passphrase or corrupted data.")
+
+def encrypt_file(in_path: str, out_path: str, passphrase: str) -> None:
+    """Read a file, encrypt its contents, write the result to out_path."""
+    data = Path(in_path).read_bytes()
+    Path(out_path).write_bytes(encrypt(data, passphrase))
+
+
+def decrypt_file(in_path: str, out_path: str, passphrase: str) -> None:
+    """Read an encrypted file, decrypt it, write the plaintext to out_path."""
+    blob = Path(in_path).read_bytes()
+    Path(out_path).write_bytes(decrypt(blob, passphrase))
